@@ -44,7 +44,7 @@ export async function priceStay({ roomSlug, planCode, checkIn, checkOut, rooms, 
   return { type, plan, dates, quote: quoteStay({ nights, plan, rooms, discount }), promo, promoMessage, nightsCount: v.nights };
 }
 
-export async function createBooking(input, { userId, idempotencyKey }) {
+export async function createBooking(input, { idempotencyKey }) {
   if (idempotencyKey) {
     const existing = await Booking.findOne({ idempotencyKey }).lean();
     if (existing) return { booking: existing, replayed: true };
@@ -74,7 +74,7 @@ export async function createBooking(input, { userId, idempotencyKey }) {
 
     // 3) Persist.
     const booking = await Booking.create({
-      code: newCode(), idempotencyKey, user: userId, roomType: type._id, roomName: type.name,
+      code: newCode(), idempotencyKey, roomType: type._id, roomName: type.name,
       ratePlan: { code: plan.code, name: plan.name, refundable: plan.refundable },
       checkIn: input.checkIn, checkOut: input.checkOut, nights: dates.length, rooms: input.rooms,
       adults: input.adults, children: input.children,

@@ -30,6 +30,11 @@ test('promo is applied before tax and can move a night into the lower slab', () 
   assert.equal(q.discount, 1000);
 });
 
+test('the discount applied is exactly the promo amount, even after per-night rounding', () => {
+  const q = quoteStay({ nights: [{ date: 'a', rate: 9333 }, { date: 'b', rate: 9333 }, { date: 'c', rate: 9333 }], plan: {}, discount: 2800 });
+  assert.equal(q.discount, 2800);
+});
+
 test('multiple rooms multiply every figure', () => {
   const one = quoteStay({ nights: [{ date: 'a', rate: 9000 }], plan: {} });
   const two = quoteStay({ nights: [{ date: 'a', rate: 9000 }], plan: {}, rooms: 2 });

@@ -18,8 +18,12 @@ export function quoteStay({ nights, plan, rooms = 1, discount = 0 }) {
   const subtotal = priced.reduce((s, n) => s + n.price, 0) * rooms;
   const ratio = subtotal > 0 ? Math.min(1, Math.max(0, discount) / subtotal) : 0;
 
-  const lines = priced.map((n) => {
-    const net = Math.round(n.price * (1 - ratio));
+  const nets = priced.map((n) => Math.round(n.price * (1 - ratio)));
+  // Rounding per night can drift a rupee from the exact discount; the last night absorbs it.
+  const wanted = (subtotal - Math.min(Math.max(discount, 0), subtotal)) / rooms;
+  if (Number.isInteger(wanted)) nets[nets.length - 1] += wanted - nets.reduce((a, b) => a + b, 0);
+  const lines = priced.map((n, i) => {
+    const net = nets[i];
     const gstRate = gstRateFor(net);
     return { ...n, net, gstRate, gst: Math.round((net * gstRate) / 100) };
   });

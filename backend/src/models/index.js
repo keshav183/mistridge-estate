@@ -7,7 +7,7 @@ export const User = def('User', new Schema({
   name: { type: String, required: true, trim: true, maxlength: 80 },
   email: { type: String, required: true, unique: true, lowercase: true, trim: true },
   passwordHash: { type: String, required: true, select: false },
-  role: { type: String, enum: ['guest', 'reservations', 'sales', 'gm'], default: 'guest', index: true },
+  role: { type: String, enum: ['reservations', 'sales', 'gm'], required: true, index: true },
 }, { timestamps: true }));
 
 export const RoomType = def('RoomType', new Schema({
@@ -67,7 +67,6 @@ export const PromoCode = def('PromoCode', new Schema({
 export const Booking = def('Booking', new Schema({
   code: { type: String, required: true, unique: true },
   idempotencyKey: { type: String, unique: true, sparse: true },
-  user: ref('User'),
   roomType: { ...ref('RoomType'), required: true },
   roomName: String,
   ratePlan: { code: String, name: String, refundable: Boolean },

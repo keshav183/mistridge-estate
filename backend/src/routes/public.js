@@ -42,7 +42,7 @@ r.post('/price', validate(priceBody), wrap(async (req, res) => {
 
 r.post('/bookings', strict, validate(bookingBody), wrap(async (req, res) => {
   const key = String(req.get('Idempotency-Key') || '').slice(0, 80) || undefined;
-  const { booking, replayed } = await createBooking(req.body, { userId: req.user?._id, idempotencyKey: key });
+  const { booking, replayed } = await createBooking(req.body, { idempotencyKey: key });
   res.status(replayed ? 200 : 201).json({ booking: publicBooking(booking) });
 }));
 

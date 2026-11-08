@@ -3,7 +3,6 @@ import { Link, Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import { useAuth } from './auth';
 import { BRAND } from './format';
 import { Spinner } from './ui';
-import Account from './pages/Account';
 import Book from './pages/Book';
 import Events from './pages/Events';
 import Home from './pages/Home';
@@ -27,8 +26,7 @@ export function SiteHeader({ solid }) {
         <nav className="nav" aria-label="Main">
           <Link to="/events" className="hide-sm">Weddings &amp; events</Link>
           <Link to="/booking" className="hide-sm">My booking</Link>
-          {isStaff && <Link to="/admin/inbox">Staff</Link>}
-          {user ? (<><Link to="/account" className="hide-sm">Account</Link><button onClick={logout}>Sign out</button></>) : <Link to="/login">Sign in</Link>}
+          {isStaff ? (<><Link to="/admin/inbox">Staff desk</Link><button onClick={logout}>Sign out</button></>) : <Link to="/login" className="hide-sm">Staff</Link>}
         </nav>
       </div>
     </header>
@@ -58,7 +56,6 @@ function Staff({ children }) {
   const loc = useLocation();
   if (user === undefined) return <div className="state" style={{ margin: '4rem auto', maxWidth: 320 }}><Spinner /></div>;
   if (!user) return <Navigate to="/login" state={{ from: loc.pathname }} replace />;
-  if (user.role === 'guest') return <Navigate to="/account" replace />;
   return children;
 }
 
@@ -72,7 +69,6 @@ export default function App() {
         <Route path="/booking" element={<Lookup />} />
         <Route path="/events" element={<Events />} />
         <Route path="/login" element={<Login />} />
-        <Route path="/account" element={<Account />} />
         <Route path="/admin" element={<Staff><AdminLayout /></Staff>}>
           <Route index element={<Navigate to="inbox" replace />} />
           <Route path="inbox" element={<Inbox />} />

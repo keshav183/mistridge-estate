@@ -38,7 +38,7 @@ export default function AdminLayout() {
       <div className="admin-main">
         <div className="topbar" style={{ justifyContent: 'flex-end' }}>
           <div className="bell">
-            <button className="icon-btn" onClick={toggle} aria-label={`Alerts${unread ? `, ${unread} unread` : ''}`} aria-expanded={open}>🔔</button>
+            <button className="btn btn-quiet btn-sm" onClick={toggle} aria-label={`Alerts${unread ? `, ${unread} unread` : ''}`} aria-expanded={open}>Alerts</button>
             {unread > 0 && <span className="dot" aria-hidden="true">{unread}</span>}
             {open && (
               <div className="dropdown" role="menu">

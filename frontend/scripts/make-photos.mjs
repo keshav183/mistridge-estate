@@ -4,10 +4,9 @@ import fs from 'node:fs';
 
 const W = 1600, H = 1000;
 const PAL = {
-  mist: { sky: ['#e3edea', '#f6f4ea'], ridges: ['#c5d6cf', '#9db9ae', '#6f9585', '#3f6b57', '#244b3a'], sun: '#fff6dc' },
-  dusk: { sky: ['#c9d3e0', '#f1d9c6'], ridges: ['#b4bccb', '#8a97ad', '#5d6f80', '#38505a', '#1e3a37'], sun: '#ffe2bd' },
-  noon: { sky: ['#cfe3ea', '#eef5ef'], ridges: ['#bfd8d3', '#8ebdb1', '#559683', '#2f705a', '#194a39'], sun: '#ffffff' },
-  rain: { sky: ['#b8c4c4', '#dfe5e1'], ridges: ['#a9b9b5', '#82978f', '#5a7469', '#375a4c', '#1f3f33'], sun: null },
+  mist: { sky: ['#e8eeea', '#f8f9f7'], ridges: ['#cdd9d3', '#a7bdb2', '#7a9a8a', '#47705c', '#25503e'], sun: '#ffffff' },
+  deep: { sky: ['#d5ddd9', '#eef1ee'], ridges: ['#b9c6c0', '#8ea199', '#617a6f', '#3a5a4c', '#1f3f33'], sun: '#ffffff' },
+  fog: { sky: ['#dfe3e1', '#f4f5f4'], ridges: ['#cfd5d2', '#b0b9b5', '#8d9993', '#66746d', '#3f4c46'], sun: null },
 };
 const rng = (s) => () => ((s = (s * 16807) % 2147483647) / 2147483647);
 
@@ -37,14 +36,14 @@ function landscape(seed, p, { x0 = 0, x1 = W, y0 = 0, y1 = H, terraces = true } 
 
 function interior(seed, p, variant) {
   const r = rng(seed);
-  const wall = ['#ece9e0', '#e4e8e2', '#efeae1'][variant % 3];
-  let s = `<rect width="${W}" height="${H}" fill="${wall}"/><rect y="760" width="${W}" height="240" fill="#cfc6b6"/>`;
+  const wall = ['#f1f1ee', '#ebedeb', '#f5f5f3'][variant % 3];
+  let s = `<rect width="${W}" height="${H}" fill="${wall}"/><rect y="760" width="${W}" height="240" fill="#dcdcd7"/>`;
   const wx = 380 + variant * 40, wy = 110, ww = 840, wh = 520;
   s += `<clipPath id="w${seed}"><rect x="${wx}" y="${wy}" width="${ww}" height="${wh}"/></clipPath><g clip-path="url(#w${seed})">${landscape(seed, p, { x0: wx, x1: wx + ww, y0: wy, y1: wy + wh, terraces: false })}</g>`;
   s += `<rect x="${wx}" y="${wy}" width="${ww}" height="${wh}" fill="none" stroke="#f9f8f3" stroke-width="18"/><path d="M${wx + ww / 2} ${wy}V${wy + wh}M${wx} ${wy + wh / 2}H${wx + ww}" stroke="#f9f8f3" stroke-width="10"/>`;
   s += `<rect x="${wx - 120}" y="560" width="${ww + 240}" height="230" rx="18" fill="#fbfaf6"/><rect x="${wx - 120}" y="500" width="${ww + 240}" height="90" rx="14" fill="#244b3a"/>`;
-  s += `<rect x="${wx - 70}" y="530" width="270" height="76" rx="30" fill="#fff"/><rect x="${wx + 230}" y="530" width="270" height="76" rx="30" fill="#fff"/><rect x="${wx - 120}" y="690" width="${ww + 240}" height="100" rx="12" fill="#e6e1d4"/>`;
-  s += `<rect x="${wx - 280}" y="560" width="90" height="230" rx="8" fill="#a98a63"/><circle cx="${wx - 235}" cy="540" r="${50 + r() * 14}" fill="#3f6b57"/><rect x="${wx + ww + 200}" y="600" width="110" height="190" rx="6" fill="#a98a63"/>`;
+  s += `<rect x="${wx - 70}" y="530" width="270" height="76" rx="30" fill="#fff"/><rect x="${wx + 230}" y="530" width="270" height="76" rx="30" fill="#fff"/><rect x="${wx - 120}" y="690" width="${ww + 240}" height="100" rx="12" fill="#e9e9e5"/>`;
+  s += `<rect x="${wx - 280}" y="560" width="90" height="230" rx="8" fill="#cfd3d0"/><circle cx="${wx - 235}" cy="540" r="${50 + r() * 14}" fill="#3f6b57"/><rect x="${wx + ww + 200}" y="600" width="110" height="190" rx="6" fill="#cfd3d0"/>`;
   return s;
 }
 
@@ -52,7 +51,7 @@ function lawn(seed, p) {
   const r = rng(seed);
   let s = landscape(seed, p, { terraces: false, y1: 640 });
   s += `<rect y="600" width="${W}" height="400" fill="#3d7255"/><rect y="600" width="${W}" height="60" fill="#5b8f6f" opacity=".5"/>`;
-  s += `<g stroke="#fbfaf6" stroke-width="10" fill="none"><path d="M560 760V430M1040 760V430M540 440Q800 330 1060 440"/></g><path d="M565 440Q800 350 1035 440L1000 640Q800 580 600 640Z" fill="#f1d2d8" opacity=".85"/>`;
+  s += `<g stroke="#fbfaf6" stroke-width="10" fill="none"><path d="M560 760V430M1040 760V430M540 440Q800 330 1060 440"/></g><path d="M565 440Q800 350 1035 440L1000 640Q800 580 600 640Z" fill="#eef1ef" opacity=".85"/>`;
   for (let row = 0; row < 5; row++) for (let i = 0; i < 12; i++) {
     const x = 250 + i * 100 + (row % 2) * 20, y = 800 + row * 40;
     if (x > 700 && x < 900) continue;
@@ -65,13 +64,13 @@ const wrap = (id, p, body) => `<svg xmlns="http://www.w3.org/2000/svg" viewBox="
 const out = (name, id, p, body) => fs.writeFileSync(new URL(`../public/photos/${name}.svg`, import.meta.url), wrap(id, p, body));
 
 out('hero', 11, PAL.mist, landscape(11, PAL.mist));
-out('estate', 12, PAL.dusk, landscape(12, PAL.dusk));
-out('events', 13, PAL.noon, lawn(13, PAL.noon));
+out('estate', 12, PAL.deep, landscape(12, PAL.deep));
+out('events', 13, PAL.mist, lawn(13, PAL.mist));
 const sets = { 'valley-deluxe': 20, 'canopy-suite': 30, 'planters-villa': 40, 'ridge-pool-villa': 50 };
-const pals = [PAL.mist, PAL.noon, PAL.dusk, PAL.rain];
+const pals = [PAL.mist, PAL.deep, PAL.fog];
 for (const [slug, base] of Object.entries(sets)) {
   [0, 1, 2].forEach((v) => {
-    const id = base + v, p = pals[(base / 10 + v) % 4];
+    const id = base + v, p = pals[(base / 10 + v) % 3];
     out(`${slug}-${v + 1}`, id, p, v === 2 ? landscape(id, p) : interior(id, p, v));
   });
 }

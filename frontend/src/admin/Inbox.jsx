@@ -75,7 +75,7 @@ function Detail({ id, staff, onChanged, onBack }) {
       <section className="ai" aria-label="AI reading">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
           <strong>AI reading: {ai.category ? LANE_NAME[ai.category] || ai.category : 'Unclear'}</strong>
-          <span className="muted small">{conf}% confident · {ai.source === 'llm' ? 'Claude, cross-checked' : 'built-in rules'}</span>
+          <span className="muted small">{conf}% confident · {ai.source === 'llm' ? 'Gemini, cross-checked' : 'built-in rules'}</span>
         </div>
         <div className={`bar ${conf < 60 ? 'low' : ''}`} role="img" aria-label={`${conf}% confidence`}><i style={{ width: `${conf}%` }} /></div>
         {ai.summary && <p className="small">{ai.summary}</p>}

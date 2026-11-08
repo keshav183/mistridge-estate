@@ -1,8 +1,14 @@
-import mongoose from 'mongoose';
 import { createApp } from './app.js';
 import { assertConfig, config } from './config.js';
+import { connectDb } from './db.js';
+import { User } from './models/index.js';
+import { seedDatabase } from './seed/seed.js';
 
 assertConfig();
-mongoose.set('strictQuery', true);
-await mongoose.connect(config.mongoUri, { serverSelectionTimeoutMS: 8000 });
-createApp().listen(config.port, () => console.log(`API ready on :${config.port} (${config.env}, AI: ${config.anthropicKey ? 'Claude + rules' : 'rules only'})`));
+const db = await connectDb();
+// Zero-config local run: an empty embedded database is filled with the demo data automatically.
+if (db.mode === 'embedded' && !(await User.exists({}))) {
+  console.log('Empty database: loading demo data...');
+  await seedDatabase();
+}
+createApp().listen(config.port, () => console.log(`API ready on http://localhost:${config.port} (${db.mode} MongoDB, AI: ${config.geminiKey ? 'Gemini + rules' : 'rules only'})`));

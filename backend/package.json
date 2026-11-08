@@ -7,9 +7,12 @@
     "start": "node src/server.js",
     "dev": "node --watch src/server.js",
     "seed": "node src/seed/seed.js",
-    "test": "node --test test/*.test.js"
+    "test": "node --test test/*.test.js",
+    "smoke": "node scripts/smoke.mjs"
   },
-  "engines": { "node": ">=20" },
+  "engines": {
+    "node": ">=20"
+  },
   "dependencies": {
     "bcryptjs": "^2.4.3",
     "compression": "^1.7.4",
@@ -21,5 +24,8 @@
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.5.0",
     "zod": "^3.23.8"
+  },
+  "optionalDependencies": {
+    "mongodb-memory-server": "^11.3.0"
   }
 }

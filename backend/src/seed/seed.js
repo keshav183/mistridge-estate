@@ -1,7 +1,7 @@
 // Seeds demo data relative to TODAY so the demo always has future availability.
 // WARNING: wipes users, rooms, inventory, bookings and enquiries in the target database.
 import bcrypt from 'bcryptjs';
-import mongoose from 'mongoose';
+import { connectDb } from '../db.js';
 import { config } from '../config.js';
 import { addDays, todayIST, weekday } from '../lib/dates.js';
 import { Booking, Counter, Enquiry, Inventory, Notification, PromoCode, RatePlan, RoomType, User } from '../models/index.js';
@@ -34,9 +34,9 @@ function seasonal(base, date) {
   return round50(base * season * wk);
 }
 
-async function main() {
-  config.anthropicKey = ''; // deterministic seed: rules engine only
-  await mongoose.connect(config.mongoUri);
+export async function seedDatabase() {
+  const savedKey = config.geminiKey;
+  config.geminiKey = ''; // deterministic seed: rules engine only
   await Promise.all([User, RoomType, RatePlan, Inventory, Booking, Enquiry, PromoCode, Counter, Notification].map((M) => M.deleteMany({})));
   await Promise.all([User, RoomType, RatePlan, Inventory, Booking, Enquiry, PromoCode].map((M) => M.syncIndexes()));
 
@@ -47,7 +47,6 @@ async function main() {
     { name: 'Meera Nair', email: 'reservations2@mistridge.test', role: 'reservations' },
     { name: 'Karthik Hegde', email: 'sales@mistridge.test', role: 'sales' },
     { name: 'Divya Shetty', email: 'sales2@mistridge.test', role: 'sales' },
-    { name: 'Demo Guest', email: 'guest@mistridge.test', role: 'guest' },
   ].map((u) => ({ ...u, passwordHash: hash })));
 
   await RatePlan.insertMany(PLANS);
@@ -83,10 +82,14 @@ async function main() {
 
   // A few real bookings through the production code path (hold -> mock payment -> confirm).
   const card = { number: '4242 4242 4242 4242', expMonth: 12, expYear: 2031, cvc: '123' };
-  const mk = (slug, plan, off, nights, name, extra = {}) => createBooking({
+  const mk = async (slug, plan, off, nights, name, extra = {}) => {
+    const t = types.find((x) => x.slug === slug); // make sure the sample stay is sellable
+    await Inventory.updateMany({ roomType: t._id, date: { $gte: addDays(today, off), $lt: addDays(today, off + nights) } }, { sold: 0, blackout: false });
+    return createBooking({
     roomSlug: slug, planCode: plan, checkIn: addDays(today, off), checkOut: addDays(today, off + nights), rooms: 1, adults: 2, children: 0,
     guest: { name, email: `${name.split(' ')[0].toLowerCase()}@example.test`, phone: '+91 98450 00000' }, consent: true, payment: card, ...extra,
   }, { idempotencyKey: `seed-${name}-${off}` }).catch((e) => console.warn(`  skipped sample booking for ${name}: ${e.message}`));
+  };
   await mk('valley-deluxe', 'bb', 9, 2, 'Asha Pillai');
   await mk('canopy-suite', 'flex', 16, 3, 'Imran Sheikh', { promoCode: 'DIRECT10' });
   await mk('planters-villa', 'saver', 45, 2, 'Neha Kulkarni', { adults: 4 });
@@ -108,7 +111,13 @@ async function main() {
   await Enquiry.collection.updateOne({ _id: e._id }, { $set: { createdAt: created, firstReplyAt: new Date(created.getTime() + 14 * 60_000), status: 'replied', replies: [{ body: e.ai.draft, sentAt: new Date(created.getTime() + 14 * 60_000), simulated: true }] } });
 
   console.log('Seeded. Demo logins (password from SEED_PASSWORD, default Demo@1234):');
-  console.log('  gm@mistridge.test  reservations@mistridge.test  sales@mistridge.test  guest@mistridge.test');
-  await mongoose.disconnect();
+  console.log('  gm@mistridge.test  reservations@mistridge.test  sales@mistridge.test');
+  config.geminiKey = savedKey;
 }
-main().catch((e) => { console.error(e); process.exit(1); });
+
+// `npm run seed` (wipes and reloads the demo data)
+if (process.argv[1]?.endsWith('seed.js')) {
+  const db = await connectDb();
+  await seedDatabase();
+  await db.close();
+}

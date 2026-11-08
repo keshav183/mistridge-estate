@@ -3,13 +3,16 @@
   "private": true,
   "description": "Direct-booking site + AI enquiry router for a coffee-estate resort (MERN)",
   "scripts": {
-    "install:all": "npm --prefix backend install && npm --prefix frontend install",
+    "install:all": "npm install && npm --prefix backend install && npm --prefix frontend install",
+    "dev": "concurrently -n api,web \"npm:dev:api\" \"npm:dev:web\"",
+    "dev:api": "npm --prefix backend run dev",
+    "dev:web": "npm --prefix frontend run dev",
     "build": "npm --prefix frontend run build",
     "start": "npm --prefix backend start",
     "seed": "npm --prefix backend run seed",
     "test": "npm --prefix backend test",
-    "dev:api": "npm --prefix backend run dev",
-    "dev:web": "npm --prefix frontend run dev"
+    "smoke": "npm --prefix backend run smoke"
   },
+  "devDependencies": { "concurrently": "^9.0.1" },
   "engines": { "node": ">=20" }
 }

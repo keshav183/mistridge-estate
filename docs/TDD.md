@@ -8,7 +8,7 @@ title: "Technical Design Document — Mistridge Estate direct booking and enquir
 
 # 1. What was built
 
-A booking website where guests choose dates, see real prices with GST, and pay (test mode) in three steps; a staff admin for daily rates, website allotment, blackout dates and promo codes; one enquiry inbox for web, event-form, forwarded-email and WhatsApp messages (the last two simulated) with an AI router that classifies, extracts, assigns an owner and drafts a reply; and a daily CSV booking export. The core slice from the brief (room pages with availability and price, booking with test payment, rate and allotment admin, enquiry inbox with AI routing, guest and reservations roles) works end to end on seeded sample data. The structured event form, GM alerts, promo codes, export, guest accounts and booking lookup are included as depth.
+A booking website where guests choose dates, see real prices with GST, and pay (test mode) in three steps, with no account needed; a staff admin for daily rates, website allotment, blackout dates and promo codes; one enquiry inbox for web, event-form, forwarded-email and WhatsApp messages (the last two simulated) with an AI router that classifies, extracts, assigns an owner and drafts a reply; and a daily CSV booking export. The core slice from the brief (room pages with availability and price, booking with test payment, rate and allotment admin, enquiry inbox with AI routing, guest and reservations roles) works end to end on seeded sample data. The structured event form, GM alerts, promo codes, export and booking lookup are included as depth. Guests book without an account; sign-in is for staff (reservations, sales, GM).
 
 **Why it matters (from the brief):** about ₹1.05 crore a year at stake: ₹33.3 lakh from moving 15% of agency room nights to direct, plus ₹72 lakh from event enquiries lost to slow replies. The design maps to the three success measures: direct share 12% → 20%, median first reply under 30 minutes, zero website overbookings. The inbox shows the median first-reply time live.
 
@@ -29,7 +29,7 @@ A booking website where guests choose dates, see real prices with GST, and pay (
 
 # 3. Architecture and why
 
-**Stack: MERN.** React 18 (Vite) single-page app; Node/Express API; MongoDB with Mongoose; JWT in an httpOnly cookie.
+**Stack: MERN.** React 18 (Vite) single-page app; Node/Express API; MongoDB with Mongoose; JWT in an httpOnly cookie. **AI: Google Gemini** (REST, optional) on top of a built-in rules engine. **MongoDB is optional locally:** with no `MONGODB_URI` the API starts an embedded MongoDB (`mongodb-memory-server`) that keeps its files in `backend/.data` and seeds itself, so `npm run dev` works on a clean machine; setting `MONGODB_URI` switches to a real MongoDB or Atlas (used in production).
 
 ```
 Browser (React SPA, code-split admin)
@@ -40,7 +40,7 @@ Express API ── helmet, rate limits, zod validation, role middleware
    ├─ routes/enquiries  web form, ingest (email/WhatsApp), inbox, re-route, reply
    ├─ lib/              dates, pricing+GST, inventory engine, payments(mock), csv  (pure, unit-tested)
    ├─ services/         availability, booking orchestration, enquiry router
-   └─ ai/               rules engine, Claude wrapper, classifier, draft guard, owner assignment
+   └─ ai/               rules engine, Gemini wrapper, classifier, draft guard, owner assignment
 MongoDB: users, roomtypes, rateplans, inventories, promocodes, bookings, enquiries, notifications, counters
 ```
 
@@ -48,7 +48,7 @@ MongoDB: users, roomtypes, rateplans, inventories, promocodes, bookings, enquiri
 
 * **One service, one origin.** Express serves the built React app. The session cookie is first-party, there is no CORS surface, and there is one thing to deploy for an ₹8 lakh, 7-week project.
 * **Cookie sessions, not tokens in localStorage.** JavaScript cannot read the session, which limits damage from XSS. SameSite=Lax plus JSON-only endpoints mitigates CSRF.
-* **MongoDB.** Documents fit bookings (a price snapshot belongs inside the booking) and enquiries (AI output, history and replies are naturally nested). The one place that needs relational care, stock, is handled by a single-document atomic update (section 5).
+* **MongoDB (optional to install).** Documents fit bookings (a price snapshot belongs inside the booking) and enquiries (AI output, history and replies are naturally nested). The one place that needs relational care, stock, is handled by a single-document atomic update (section 5).
 * **Pure logic in `lib/`.** Pricing, dates, the inventory engine and the CSV writer have no database or HTTP in them, so the important rules are unit-tested without infrastructure.
 * **Speed on slow networks.** No web fonts (system stacks), vector photos of 4–10 KB each, route-level code splitting (guest bundle about 67 KB gzipped; staff screens load only for staff), aspect-ratio boxes so nothing jumps, lazy-loaded images, long-cache hashed assets, gzip.
 
@@ -56,7 +56,7 @@ MongoDB: users, roomtypes, rateplans, inventories, promocodes, bookings, enquiri
 
 | Collection | Key fields | Notes |
 |-------|--------------------------|------------------------------------|
-| `User` | name, email (unique), passwordHash, role: guest / reservations / sales / gm | Public sign-up can only create `guest`. bcrypt cost 11. |
+| `User` | name, email (unique), passwordHash, role: reservations / sales / gm | Staff only; guests book without an account. bcrypt cost 11. |
 | `RoomType` | slug, name, kind (room/villa), units, maxAdults, maxGuests, photos[], amenities[] | Physical inventory. |
 | `RatePlan` | code, adjustPct, addPerNight, refundable, cancellation | Price = base × (1 + adjust) + add-on. |
 | `Inventory` | roomType, date (YYYY-MM-DD), rate, allotment, sold, blackout | **Unique (roomType, date).** One row per room type per night. The only stock the website can sell. |
@@ -95,7 +95,7 @@ There is no read-then-write. If two guests race for the last unit, MongoDB seria
 
 ```
 message ─► rules engine (always) ──┐
-        └► Claude (if key set) ────┴► validate (zod) ─► cross-check ─► confidence
+        └► Gemini (if key set) ────┴► validate (zod) ─► cross-check ─► confidence
 confidence ≥ 0.6 ?  lane = category  :  lane = Unsorted (GM)
 lane ─► owner = least-loaded person in the lane's role  (room→reservations, wedding/offsite→sales, complaint/unsorted→GM)
 room + dates ─► quote from the rate table ─► draft (token {{QUOTE}} filled by the server)
@@ -103,10 +103,10 @@ complaint (or any complaint signal) ─► GM notification
 ```
 
 * **Classification and extraction:** category (room, wedding, offsite, complaint), dates, month hints, guests, adults/children, nights and budget (₹, lakh, crore). Indian formats are handled ("14-16 Nov", "₹3.5 lakh", "team of 45"). The rules engine alone passes the three sample enquiries (ENQ-4410 Wedding, ENQ-4411 Room, ENQ-4412 Corporate offsite) in tests.
-* **Claude layer:** the enquiry is passed as delimited data with an instruction not to follow text inside it. Output must match a strict schema; extracted dates are re-validated and discarded if invalid or in the past.
+* **Gemini layer:** one REST call with JSON output mode, thinking off for speed and a 12 s timeout.  the enquiry is passed as delimited data with an instruction not to follow text inside it. Output must match a strict schema; extracted dates are re-validated and discarded if invalid or in the past.
 * **When it is wrong or unsure**
   * Confidence below 0.6, or "other", goes to the **Unsorted lane that the GM owns**, with a plain-language warning in the UI.
-  * If Claude and the rules engine disagree and the rules engine is confident, confidence is capped below the threshold, so disagreement forces human review.
+  * If Gemini and the rules engine disagree and the rules engine is confident, confidence is capped below the threshold, so disagreement forces human review.
   * Malformed or failed model output, or a timeout (12 s), falls back to the rules engine; the enquiry is never lost or delayed.
   * **Staff re-route in one click** (lane control in the detail pane); the draft is regenerated for the new lane, the change is logged in the enquiry history.
   * **Drafts are never sent automatically.** A person reads, edits and presses Send (simulated in this build).
@@ -116,7 +116,7 @@ complaint (or any complaint signal) ─► GM notification
 
 # 8. UI and design decisions
 
-**Direction:** quiet, photo-led, minimal. Mist-white paper, one deep "canopy" green for actions, ink text, and a cherry red used only for alerts. Left-aligned serif headlines against a plain sans for forms. Nothing on screen lacks a purpose: no carousels, no badges that are not information. Photography carries the experience.
+**Direction:** quiet, photo-led, minimal, and one theme everywhere: black ink on white, three greys and a single accent, deep canopy green, used for actions, selected states and the sidebar. No second colour: attention is shown with weight, borders and solid ink badges, and errors with a bold "!" message and a heavier field border, never red. Left-aligned serif headlines against a plain sans for forms; square-ish 2–6 px corners; no shadows. Nothing on screen lacks a purpose: no carousels, no decorative badges. The photography stand-ins use only tones of the same green and grey, so the whole site stays inside one palette.
 
 | Screen | Decision and why |
 |-------|----------------------------------------------|
@@ -142,14 +142,16 @@ States: every data screen has a skeleton while loading, an empty state that says
 
 # 10. Testing
 
-`npm test` runs 28 unit tests with Node's built-in runner and no database: the concurrency and rollback tests above; GST slab boundaries, plans, promos and multi-room totals; date validation (past, impossible dates, horizon, IST rollover); mock-gateway success, declines and bad input; CSV quoting and injection; the three sample enquiries, vague and complaint messages, Indian date and budget formats; LLM valid, malformed, failing, contradicting and bad-date cases; the price detector and draft guard; and owner assignment.
+`npm test` runs 29 unit tests with Node's built-in runner and no database: the concurrency and rollback tests above; GST slab boundaries, plans, promos (including that the applied discount equals the promo amount exactly) and multi-room totals; date validation (past, impossible dates, horizon, IST rollover); mock-gateway success, declines and bad input; CSV quoting and injection; the three sample enquiries, vague and complaint messages, Indian date and budget formats; Gemini output valid, malformed, failing, contradicting and with bad dates (using an injected fake model); the price detector and draft guard; and owner assignment.
 
-**Honest gap:** the environment where this was built had no MongoDB, so the HTTP routes and the seed script were syntax-checked and the app was load-tested, but not exercised against a live database; the atomic update is tested through a faithful in-memory model rather than real Mongo. The first thing to run on a machine with Mongo is `npm run seed` and the review path in deployment.md. Adding API integration tests with `mongodb-memory-server` is the first next step.
+`npm run smoke` is an end-to-end script against a running API and a real MongoDB. It checks: 25 simultaneous bookings for one remaining unit produce exactly one booking and stock never goes negative; a declined card releases the hold; the same Idempotency-Key returns the same booking; promo cap and expiry; past dates and missing consent rejected; staff-only routes return 401/403 as designed; allotment above physical units refused; blacked-out nights cannot be booked; the CSV export downloads; and the three sample enquiries plus a complaint and a vague message land in the right lanes. All 22 checks passed against MongoDB 8.3 during development.
+
+**Honest gaps:** there is no automated browser test (I checked the main screens at desktop and phone width by hand), the Gemini call itself was exercised only through a fake model in tests because no API key was available while building, and the embedded MongoDB was verified with a system binary during development, so the first run on a new machine also depends on the one-time binary download working on that network.
 
 # 11. What I cut, and what I would do next
 
-**Cut (deliberately):** real payment gateway and webhooks; real email/WhatsApp delivery and inbound parsing (the ingest endpoint is the seam where they plug in); refunds and guest self-cancellation; multi-room-type baskets; calendar-based event availability and event pricing; the reservation-system integration beyond the CSV; automated GM escalation if a complaint is unread; photo CMS.
+**Cut (deliberately):** guest accounts (guests book with an email and find the booking by reference), real payment gateway and webhooks; real email/WhatsApp delivery and inbound parsing (the ingest endpoint is the seam where they plug in); refunds and guest self-cancellation; multi-room-type baskets; calendar-based event availability and event pricing; the reservation-system integration beyond the CSV; automated GM escalation if a complaint is unread; photo CMS.
 
-**Next:** (1) integration tests against Mongo and an end-to-end browser test of the booking flow; (2) real gateway (Razorpay) with webhook-confirmed payment and a short stock hold with expiry; (3) WhatsApp Business and email-forwarding adapters; (4) first-reply SLA timer and breach alerts by working hours; (5) DPDP data-erasure and retention jobs, plus an audit log of staff views of guest data; (6) price/allotment change audit trail and rate-plan restrictions (minimum stay); (7) event proposals with their own pricing; (8) real photography as AVIF/WebP with `srcset`; (9) measuring direct share and reply time on a dashboard against the 20% and 30-minute targets.
+**Next:** (1) run the smoke checks in CI and add a browser test of the booking flow; (2) real gateway (Razorpay) with webhook-confirmed payment and a short stock hold with expiry; (3) WhatsApp Business and email-forwarding adapters; (4) first-reply SLA timer and breach alerts by working hours; (5) DPDP data-erasure and retention jobs, plus an audit log of staff views of guest data; (6) price/allotment change audit trail and rate-plan restrictions (minimum stay); (7) event proposals with their own pricing; (8) real photography as AVIF/WebP with `srcset`; (9) measuring direct share and reply time on a dashboard against the 20% and 30-minute targets.
 
 **Known limits:** one active physical inventory per room type (no room numbers); the rules engine is English-only (Hindi/Kannada messages go to Unsorted by design); GST needs professional sign-off (A3).

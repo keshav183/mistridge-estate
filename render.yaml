@@ -1,9 +1,9 @@
-# Optional Render blueprint: one web service serves the API and the built React app (single origin, so the session cookie is first-party).
+# Render blueprint: one web service serves the API and the built React app (single origin).
 services:
   - type: web
     name: mistridge-estate
     runtime: node
-    buildCommand: npm run install:all && npm run build
+    buildCommand: npm --prefix backend install --omit=optional && npm --prefix frontend install && npm run build
     startCommand: npm start
     healthCheckPath: /api/health
     envVars:
@@ -13,7 +13,7 @@ services:
         sync: false
       - key: JWT_SECRET
         generateValue: true
-      - key: ANTHROPIC_API_KEY
+      - key: GEMINI_API_KEY
         sync: false
       - key: INGEST_KEY
         generateValue: true

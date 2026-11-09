@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { api, ApiError, qs } from '../api';
 import { PublicShell } from '../App';
-import { fmtRange, inr, nightsBetween, plural, uuid } from '../format';
+import { coverOf, fmtRange, inr, nightsBetween, plural, uuid } from '../format';
 import { PriceLines } from '../Price';
 import { ErrorState, Field, Photo, Skeleton, Spinner, useFetch } from '../ui';
 
@@ -185,7 +185,7 @@ export default function Book() {
             </div>
 
             <aside className="panel sticky" aria-label="Booking summary">
-              <div className="mini"><Photo src={room.photos[0].url} alt="" ratio="1 / 1" /><div><strong>{room.name}</strong><p className="muted small">{fmtRange(stay.checkIn, stay.checkOut)}<br />{plural(nightsBetween(stay.checkIn, stay.checkOut), 'night')} · {plural(stay.adults, 'adult')}{stay.children ? `, ${plural(stay.children, 'child')}` : ''}</p></div></div>
+              <div className="mini"><Photo src={coverOf(room)} alt="" ratio="1 / 1" /><div><strong>{room.name}</strong><p className="muted small">{fmtRange(stay.checkIn, stay.checkOut)}<br />{plural(nightsBetween(stay.checkIn, stay.checkOut), 'night')} · {plural(stay.adults, 'adult')}{stay.children ? `, ${plural(stay.children, 'child')}` : ''}</p></div></div>
               {priced.loading && !quote ? <Skeleton h={110} r={8} /> : quote && <PriceLines quote={quote} promoCode={promo?.code} />}
               {priced.error && <ErrorState error={priced.error} onRetry={priced.reload} />}
               <p className="muted small">{avail.data.plans.find((p) => p.code === planCode)?.cancellation}. GST is charged at the rate for each night’s tariff.</p>

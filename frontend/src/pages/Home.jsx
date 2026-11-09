@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { api, qs } from '../api';
 import { PublicShell, SiteFooter, SiteHeader } from '../App';
-import { addDays, fmtRange, inr, nightsBetween, plural, todayISO } from '../format';
+import { coverOf, fmtRange, inr, nightsBetween, plural } from '../format';
 import RangeCalendar from '../RangeCalendar';
 import { Empty, ErrorState, Field, Photo, Skeleton, useFetch } from '../ui';
 
@@ -46,7 +46,7 @@ function RoomCard({ r, stay }) {
   const priced = hasDates && r.nights > 0 && Boolean(flex);
   return (
     <article className={`room-card ${unavailable ? 'soldout' : ''}`}>
-      <Photo src={room.photos[0]?.url} alt={room.photos[0]?.alt || room.name} />
+      <Link to={to} tabIndex={-1} aria-hidden="true"><Photo src={coverOf(room)} alt={room.photos?.[0]?.alt || room.name} /></Link>
       <div className="body">
         <div><h3><Link to={to} style={{ textDecoration: 'none' }}>{room.name}</Link></h3><p className="muted">{room.tagline}</p></div>
         <div className="facts"><span>{room.sizeSqft} sq ft</span><span>{room.bed}</span><span>Sleeps {room.maxGuests}</span></div>
@@ -59,7 +59,11 @@ function RoomCard({ r, stay }) {
             <span className="muted small">for {plural(r.nights, 'night')}, incl. GST</span>
             {r.left <= 3 && <span className="badge">Only {r.left} left</span>}
           </div>
-        ) : <p className="muted small">{hasDates ? 'Checking prices…' : 'Choose dates to see prices and availability.'}</p>}
+        ) : hasDates ? <p className="muted small">Checking prices…</p> : (
+          <div className="price-line">
+            {room.fromRate ? <><span className="muted small">From</span><span className="price">{inr(room.fromRate)}</span><span className="muted small">a night, before tax</span></> : <span className="muted small">Choose dates to see prices and availability.</span>}
+          </div>
+        )}
         <div><Link className={`btn ${unavailable ? 'btn-quiet' : ''}`} to={to}>{priced && !unavailable ? 'Choose this room' : 'View room'}</Link></div>
       </div>
     </article>
@@ -95,7 +99,7 @@ export default function Home() {
 
         <section className="section wrap" id="rooms">
           <div className="section-head">
-            <h2>{hasDates ? `Available ${fmtRange(stay.checkIn, stay.checkOut)}` : 'Rooms & villas'}</h2>
+            <div><p className="eyebrow">Stay</p><h2>{hasDates ? `Available ${fmtRange(stay.checkIn, stay.checkOut)}` : 'Rooms & villas'}</h2></div>
             {hasDates && <button className="btn btn-quiet btn-sm" onClick={() => setSp({})}>Clear dates</button>}
           </div>
           <div className="stack">
@@ -107,10 +111,30 @@ export default function Home() {
           </div>
         </section>
 
+        <section className="section wrap" aria-label="Why book direct">
+          <div className="pillars">
+            <div><p className="eyebrow">Clear prices</p><p>Every total you see includes GST, at the rate that applies to each night’s tariff. No surprises at checkout.</p></div>
+            <div><p className="eyebrow">Your rate plan</p><p>Choose flexible, breakfast included, or an advance saver. Promo codes work on direct bookings.</p></div>
+            <div><p className="eyebrow">A real reply</p><p>Questions go to the right person on our team, with a reply drafted and ready for them.</p></div>
+          </div>
+        </section>
+
+        <section className="section wrap">
+          <div className="split">
+            <div className="stack">
+              <p className="eyebrow">The estate</p>
+              <h2>A working coffee estate in the Western Ghats</h2>
+              <p className="muted">Sixty-four rooms and twelve villas set among shade-grown coffee, with lawns, a conference hall and walks through the plantation each morning.</p>
+            </div>
+            <Photo src="/photos/estate.svg" alt="Estate ridges at dusk" ratio="4 / 3" />
+          </div>
+        </section>
+
         <section className="section wrap">
           <div className="split">
             <Photo src="/photos/events.svg" alt="Wedding lawn with a flower-draped arch, ridges beyond" ratio="4 / 3" />
             <div className="stack">
+              <p className="eyebrow">Events</p>
               <h2>Weddings, offsites and gatherings</h2>
               <p className="muted">Lawns that hold 400, a conference hall, and 76 keys on site. Tell us what you have in mind and the right person on our events team replies with a proposal.</p>
               <div><Link className="btn" to="/events">Plan an event</Link></div>

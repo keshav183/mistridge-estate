@@ -1,4 +1,8 @@
-import { Router } from 'express';
+import crypto from 'node:crypto';
+import fs from 'node:fs';
+import path from 'node:path';
+import express, { Router } from 'express';
+import { config } from '../config.js';
 import { z } from 'zod';
 import { addDays, diffDays, isValidISODate, todayIST, weekday } from '../lib/dates.js';
 import { toCsv } from '../lib/csv.js';
@@ -65,6 +69,51 @@ r.put('/inventory/bulk', inventoryRoles, validate(bulk), wrap(async (req, res) =
     modified = (await Inventory.updateMany({ roomType: roomTypeId, date: { $in: dates } }, { $set: set })).modifiedCount;
   }
   res.json({ dates: dates.length, modified, skippedBelowSold: Math.max(0, skipped) });
+}));
+
+// ---- Room photos ---------------------------------------------------------------------------
+// Staff upload JPEG/PNG/WebP (the browser shrinks them to <=1600px first, so pages stay light on slow networks).
+// The file type is checked from its first bytes, never from the file name or the header the client sends.
+const uploadDir = path.resolve(config.uploadDir);
+const MAX_PHOTOS = 8;
+const sniff = (b) => (b[0] === 0xff && b[1] === 0xd8 && b[2] === 0xff ? '.jpg' : b.subarray(0, 4).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47])) ? '.png' : b.subarray(0, 4).toString() === 'RIFF' && b.subarray(8, 12).toString() === 'WEBP' ? '.webp' : null);
+const roomById = async (id) => { const room = await RoomType.findById(id); if (!room) throw notFound('Room type not found'); return room; };
+
+r.get('/rooms', inventoryRoles, wrap(async (_req, res) => res.json({ rooms: await RoomType.find().sort({ order: 1 }).select('name slug photos').lean() })));
+
+r.post('/rooms/:id/photos', inventoryRoles, express.raw({ type: ['image/jpeg', 'image/png', 'image/webp'], limit: '4mb' }), wrap(async (req, res) => {
+  if (!Buffer.isBuffer(req.body) || !req.body.length) throw badRequest('Choose a JPEG, PNG or WebP image (up to 4 MB).');
+  const ext = sniff(req.body);
+  if (!ext) throw badRequest('That file is not a JPEG, PNG or WebP image.');
+  const room = await roomById(req.params.id);
+  if (room.photos.length >= MAX_PHOTOS) throw badRequest(`A room can have at most ${MAX_PHOTOS} photos. Delete one first.`);
+  fs.mkdirSync(uploadDir, { recursive: true });
+  const name = `${crypto.randomUUID()}${ext}`;
+  fs.writeFileSync(path.join(uploadDir, name), req.body);
+  const alt = String(req.query.alt || '').trim().slice(0, 120) || `${room.name}, photo ${room.photos.length + 1}`;
+  room.photos.push({ url: `/uploads/${name}`, alt });
+  await room.save();
+  res.status(201).json({ photos: room.photos });
+}));
+
+r.patch('/rooms/:id/photos/:index/cover', inventoryRoles, wrap(async (req, res) => {
+  const room = await roomById(req.params.id);
+  const i = Number(req.params.index);
+  if (!Number.isInteger(i) || i < 0 || i >= room.photos.length) throw notFound('Photo not found');
+  const [p] = room.photos.splice(i, 1);
+  room.photos.unshift(p);
+  await room.save();
+  res.json({ photos: room.photos });
+}));
+
+r.delete('/rooms/:id/photos/:index', inventoryRoles, wrap(async (req, res) => {
+  const room = await roomById(req.params.id);
+  const i = Number(req.params.index);
+  if (!Number.isInteger(i) || i < 0 || i >= room.photos.length) throw notFound('Photo not found');
+  const [p] = room.photos.splice(i, 1);
+  await room.save();
+  if (p.url?.startsWith('/uploads/')) fs.rm(path.join(uploadDir, path.basename(p.url)), { force: true }, () => {});
+  res.json({ photos: room.photos });
 }));
 
 // ---- Promo codes ---------------------------------------------------------------------------

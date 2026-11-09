@@ -5,7 +5,7 @@ import { addDays, isValidISODate, todayIST } from '../lib/dates.js';
 import { notFound } from '../lib/errors.js';
 import { wrap } from '../middleware/error.js';
 import { validate } from '../middleware/validate.js';
-import { Booking, RatePlan, RoomType } from '../models/index.js';
+import { Booking, Inventory, RatePlan, RoomType } from '../models/index.js';
 import { roomCalendar, searchStay } from '../services/availability.js';
 import { createBooking, priceStay, publicBooking } from '../services/booking.js';
 import { bookingBody, email, isoDate, priceBody, stayQuery } from './schemas.js';
@@ -15,8 +15,15 @@ const strict = rateLimit({ windowMs: 10 * 60_000, limit: 40, standardHeaders: tr
 
 r.get('/rooms', wrap(async (_req, res) => {
   const rooms = await RoomType.find({ active: true }).sort({ order: 1 }).select('-__v').lean();
-  res.set('Cache-Control', 'public, max-age=300');
-  res.json({ rooms });
+  // "From" price = cheapest sellable night in the next 60 days.
+  const today = todayIST();
+  const mins = await Inventory.aggregate([
+    { $match: { date: { $gte: today, $lte: addDays(today, 60) }, blackout: false, $expr: { $gt: ['$allotment', '$sold'] } } },
+    { $group: { _id: '$roomType', fromRate: { $min: '$rate' } } },
+  ]);
+  const byType = new Map(mins.map((m) => [String(m._id), m.fromRate]));
+  res.set('Cache-Control', 'public, max-age=60');
+  res.json({ rooms: rooms.map((x) => ({ ...x, fromRate: byType.get(String(x._id)) ?? null })) });
 }));
 r.get('/rooms/:slug', wrap(async (req, res) => {
   const room = await RoomType.findOne({ slug: req.params.slug, active: true }).select('-__v').lean();

@@ -9,6 +9,8 @@ export const config = {
   // Empty = run on an embedded MongoDB (no install needed). Set it to use a real MongoDB / Atlas.
   mongoUri: env('MONGODB_URI'),
   dataDir: env('DATA_DIR', '.data'),
+  // Staff-uploaded room photos live here. On hosts with an ephemeral disk, mount a persistent disk at this path.
+  uploadDir: env('UPLOAD_DIR') || `${env('DATA_DIR', '.data')}/uploads`,
   jwtSecret: env('JWT_SECRET', PLACEHOLDER),
   clientOrigin: env('CLIENT_ORIGIN'),
   // The placeholder value means "no real key yet": the router then uses its built-in rules engine.

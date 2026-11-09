@@ -7,6 +7,9 @@ export function errorHandler(err, _req, res, _next) {
   if (err instanceof HttpError) {
     return res.status(err.status).json({ error: { code: err.code, message: err.message, fields: err.details } });
   }
+  if (err?.status >= 400 && err?.status < 500) {
+    return res.status(err.status).json({ error: { code: 'client', message: err.status === 404 ? 'Not found' : 'Bad request' } });
+  }
   if (err?.type === 'entity.parse.failed') {
     return res.status(400).json({ error: { code: 'bad_json', message: 'Malformed request.' } });
   }

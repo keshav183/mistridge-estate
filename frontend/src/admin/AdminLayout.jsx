@@ -32,6 +32,7 @@ export default function AdminLayout() {
           {desk && <NavLink to="rates">Rates &amp; allotment</NavLink>}
           {desk && <NavLink to="bookings">Bookings</NavLink>}
           {desk && <NavLink to="promos">Promo codes</NavLink>}
+          {desk && <NavLink to="photos">Room photos</NavLink>}
         </nav>
         <div className="who"><div>{user.name}</div><div style={{ opacity: .7 }}>{ROLE[user.role]}</div><button onClick={async () => { await logout(); nav('/'); }}>Sign out</button></div>
       </aside>

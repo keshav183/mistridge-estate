@@ -44,6 +44,8 @@ export function createApp() {
   app.use('/api', publicRoutes);
   app.use('/api', notFoundHandler);
 
+  app.use('/uploads', express.static(path.resolve(config.uploadDir), { maxAge: '30d', immutable: true, fallthrough: false }));
+
   // Single-origin production: serve the built React app.
   const dist = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../frontend/dist');
   if (fs.existsSync(dist)) {

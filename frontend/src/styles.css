@@ -254,3 +254,54 @@ tr:last-child td { border-bottom: 0; }
 .side-tab:hover { background: var(--canopy); }
 @media (max-width: 640px) { .side-tab { padding: .8rem .45rem; font-size: .8rem; top: 62%; } }
 @media print { .side-tab { display: none; } }
+
+/* ---------- Polish ---------- */
+main { animation: fadein .4s ease both; }
+@keyframes fadein { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+.eyebrow { font: 600 .72rem var(--sans); letter-spacing: .16em; text-transform: uppercase; color: var(--canopy); margin: 0 0 .7rem; }
+h1, h2 { text-wrap: balance; }
+
+/* Header: transparent over the hero, turns white once you scroll */
+.site-head:not(.solid) { position: fixed; transition: background .25s, color .25s, border-color .25s; border-bottom: 1px solid transparent; }
+.site-head.scrolled:not(.solid) { background: rgb(255 255 255 / .96); color: var(--ink); border-bottom-color: var(--line); backdrop-filter: blur(6px); }
+
+/* Editorial room cards: no boxes, hairlines between */
+.room-card { border: 0; border-top: 1px solid var(--line); border-radius: 0; background: transparent; padding: 2.2rem 0 0; gap: 3rem; }
+.room-card:first-child { border-top: 0; padding-top: 0; }
+.room-card .photo { border-radius: var(--r-2); }
+.room-card .photo img { transition: transform .6s ease; }
+.room-card:hover .photo img { transform: scale(1.035); }
+.room-card h3 { font-size: 1.9rem; }
+.room-card .body { padding: 0; gap: 1rem; }
+.room-card .btn { min-width: 11rem; }
+
+/* Pillars under the rooms */
+.pillars { display: grid; grid-template-columns: repeat(3, 1fr); gap: 3rem; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); padding: 2.4rem 0; }
+.pillars p:last-child { color: var(--ink-2); max-width: 34ch; }
+@media (max-width: 760px) { .pillars { grid-template-columns: 1fr; gap: 1.6rem; padding: 1.6rem 0; } .room-card { gap: 1rem; padding-top: 1.6rem; } }
+
+/* Hero refinements */
+.hero h1 { font-size: clamp(2.6rem, 6vw, 4.6rem); letter-spacing: -.02em; }
+.searchbar { border-radius: var(--r-3); }
+.section-head h2 { max-width: 22ch; }
+
+/* Room page */
+.zoomable { display: block; width: 100%; padding: 0; border: 0; background: none; cursor: zoom-in; }
+.thumb { transition: opacity .2s; opacity: .75; } .thumb:hover, .thumb[aria-current="true"] { opacity: 1; }
+.lightbox { position: fixed; inset: 0; z-index: 100; background: rgb(10 20 16 / .94); display: grid; place-items: center; padding: 2rem; animation: fadein .2s ease both; }
+.lightbox img { max-width: min(1400px, 100%); max-height: 88vh; object-fit: contain; border-radius: var(--r-1); }
+.lb-btn { position: absolute; background: rgb(255 255 255 / .12); color: #fff; border: 0; width: 48px; height: 48px; border-radius: 50%; font-size: 1.8rem; cursor: pointer; line-height: 1; }
+.lb-btn:hover { background: rgb(255 255 255 / .25); }
+.lb-prev { left: 1.2rem; top: 50%; } .lb-next { right: 1.2rem; top: 50%; } .lb-close { right: 1.2rem; top: 1.2rem; }
+.lb-count { position: absolute; bottom: 1.2rem; color: #cfd8d3; font-size: .85rem; }
+
+/* Admin photo manager */
+.photo-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 1rem; }
+.photo-tile { margin: 0; position: relative; border: 1px solid var(--line); border-radius: var(--r-2); overflow: hidden; background: var(--surface); }
+.photo-tile img { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; display: block; }
+.photo-tile figcaption { padding: .7rem .8rem; display: grid; gap: .5rem; }
+.tile-actions { display: flex; gap: .4rem; flex-wrap: wrap; }
+.cover-badge { position: absolute; top: .6rem; left: .6rem; }
+.dropzone { border: 1px dashed var(--line-2); border-radius: var(--r-3); padding: 2rem 1rem; text-align: center; display: grid; gap: .8rem; justify-items: center; background: var(--mist); transition: background .2s, border-color .2s; }
+.dropzone.drag { border-color: var(--canopy); background: var(--canopy-tint); }
+.dropzone .field { width: 100%; text-align: left; }

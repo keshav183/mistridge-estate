@@ -48,7 +48,7 @@ Live app: _add URL here after deploying_
 | `GEMINI_MODEL` | optional | Defaults to `gemini-2.5-flash` |
 | `INGEST_KEY` | optional | Shared secret for the simulated WhatsApp/email webhook (header `x-ingest-key`; demo `hello123`) |
 | `AI_CONFIDENCE_THRESHOLD` | optional | Below this, an enquiry goes to the GM's Unsorted lane (default 0.6) |
-| `PORT`, `DATA_DIR`, `CLIENT_ORIGIN`, `SEED_PASSWORD` | optional | Port, embedded DB folder, dev-only CORS origin, demo password (default `hello123`) |
+| `PORT`, `DATA_DIR`, `UPLOAD_DIR`, `CLIENT_ORIGIN`, `SEED_PASSWORD` | optional | Port, embedded DB folder, room-photo folder, dev-only CORS origin, demo password (default `hello123`) |
 
 No secrets are in the repository; `.env` and `.data` are git-ignored.
 
@@ -64,10 +64,19 @@ Password for all: **`hello123`**
 
 Sign in at `/login` (the "Staff" link in the header). **Test cards:** `4242 4242 4242 4242` succeeds; `4000 0000 0000 0002` is declined. Any future expiry, any 3-digit code.
 
-## 5. Suggested 5-minute review path
+## 5. Uploading room photos (staff)
+
+1. Sign in as **Reservations** or **GM** and open **Room photos** in the left menu.
+2. Pick the room type tab, then drag images onto the box or click **Choose photos** (JPEG, PNG or WebP, up to 8 per room). Add an optional description for screen readers.
+3. The first photo is the **cover** on the home page and room page. Use **Make cover** to change it and **Delete** to remove one. Guests see the change immediately.
+
+Photos are shrunk in the browser to 1600 px before upload (a phone photo becomes a few hundred KB), and the server checks the real file type. Files are stored in `backend/.data/uploads` locally, or in `UPLOAD_DIR` if set. **On a host with an ephemeral disk (for example Render's free tier) uploaded photos are lost on redeploy**: attach a persistent disk and point `UPLOAD_DIR` at it, or move storage to S3/Cloudinary (the first item under "next" in the TDD). Until a room has a photo, the website shows an illustrated placeholder.
+
+## 6. Suggested 5-minute review path
 0. Guest side: use the **Enquiry** tab on the right edge of the home page to send a message such as "Is a villa free 14-16 Nov for 2 adults and a child?"; sign in as staff and see it already routed in the inbox.
 1. Home: pick dates, open *Planter's Villa*, choose a rate plan, Reserve, three steps, confirmation. Look the booking up again from "My booking".
 2. Sign in as Reservations, *Rates & allotment*: click a night, set allotment to what is already sold, then try to book it as a guest: it is refused. Block a date: it disappears from the guest calendar.
 3. *Enquiry inbox*: the three sample enquiries from the brief are already routed (Wedding, Room, Offsite). Open one, read the AI reading, edit the draft, Send (simulated).
 4. *Simulate an inbound message*: send the complaint sample (Complaint lane, GM alert) and "hi do you have something nice for the long weekend?" (Unsorted lane). Re-route in one click.
 5. *Bookings*: download the daily CSV export.
+6. *Room photos*: upload a photo for a room, make it the cover, and see it on the home page and room page (click the photo to enlarge).

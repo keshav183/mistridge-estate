@@ -1,4 +1,4 @@
-import { lazy, Suspense } from 'react';
+import { lazy, Suspense, useEffect, useState } from 'react';
 import { Link, Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import { useAuth } from './auth';
 import { BRAND } from './format';
@@ -17,11 +17,20 @@ const Rates = lazy(() => import('./admin/Rates'));
 const Inbox = lazy(() => import('./admin/Inbox'));
 const Bookings = lazy(() => import('./admin/Bookings'));
 const Promos = lazy(() => import('./admin/Promos'));
+const Photos = lazy(() => import('./admin/Photos'));
 
 export function SiteHeader({ solid }) {
   const { user, logout, isStaff } = useAuth();
+  const [scrolled, setScrolled] = useState(false);
+  useEffect(() => {
+    if (solid) return undefined;
+    const on = () => setScrolled(window.scrollY > 40);
+    on();
+    window.addEventListener('scroll', on, { passive: true });
+    return () => window.removeEventListener('scroll', on);
+  }, [solid]);
   return (
-    <header className={`site-head ${solid ? 'solid' : ''}`}>
+    <header className={`site-head ${solid ? 'solid' : ''} ${scrolled ? 'scrolled' : ''}`}>
       <div className="wrap">
         <Link to="/" className="brand">{BRAND}</Link>
         <nav className="nav" aria-label="Main">
@@ -82,6 +91,7 @@ export default function App() {
           <Route path="rates" element={<Rates />} />
           <Route path="bookings" element={<Bookings />} />
           <Route path="promos" element={<Promos />} />
+          <Route path="photos" element={<Photos />} />
         </Route>
         <Route path="*" element={<NotFound />} />
       </Routes>

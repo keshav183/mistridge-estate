@@ -2,9 +2,9 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { api, qs } from '../api';
 import { PublicShell } from '../App';
-import { fmtRange, inr, nightsBetween, plural, todayISO } from '../format';
+import { coverOf, fmtRange, inr, nightsBetween, plural } from '../format';
 import RangeCalendar from '../RangeCalendar';
-import { ErrorState, Field, Photo, Skeleton, useFetch } from '../ui';
+import { ErrorState, Field, Lightbox, Photo, Skeleton, useFetch } from '../ui';
 import { stayParams } from './Home';
 
 export default function Room() {
@@ -13,6 +13,7 @@ export default function Room() {
   const [sp, setSp] = useSearchParams();
   const stay = stayParams(sp);
   const [photo, setPhoto] = useState(0);
+  const [zoom, setZoom] = useState(false);
   const [plan, setPlan] = useState('flex');
   const hasDates = Boolean(stay.checkIn && stay.checkOut);
 
@@ -32,6 +33,7 @@ export default function Room() {
 
   if (room.error) return <PublicShell><div className="wrap" style={{ paddingTop: '3rem' }}><ErrorState error={room.error} onRetry={room.reload} /></div></PublicShell>;
   const r = room.data;
+  const gallery = r ? (r.photos?.length ? r.photos : [{ url: coverOf(r), alt: r.name }]) : [];
 
   return (
     <PublicShell>
@@ -42,8 +44,8 @@ export default function Room() {
             {!r ? <Skeleton h={420} r={8} /> : (
               <>
                 <div className="gallery">
-                  <Photo src={r.photos[photo].url} alt={r.photos[photo].alt} ratio="16 / 10" eager />
-                  <div className="thumbs">{r.photos.map((p, i) => <button key={p.url} className="thumb" aria-current={i === photo} aria-label={`Show photo ${i + 1}`} onClick={() => setPhoto(i)}><Photo src={p.url} alt="" ratio="3 / 2" /></button>)}</div>
+                  <button type="button" className="zoomable" onClick={() => setZoom(true)} aria-label="Enlarge photo"><Photo src={gallery[photo].url} alt={gallery[photo].alt} ratio="16 / 10" eager /></button>
+                  <div className="thumbs">{gallery.length > 1 && gallery.map((p, i) => <button key={p.url} className="thumb" aria-current={i === photo} aria-label={`Show photo ${i + 1}`} onClick={() => setPhoto(i)}><Photo src={p.url} alt="" ratio="3 / 2" /></button>)}</div>
                 </div>
                 <div className="stack" style={{ gap: '1rem' }}>
                   <h1 style={{ fontSize: 'clamp(2rem,4vw,2.8rem)' }}>{r.name}</h1>
@@ -94,6 +96,7 @@ export default function Room() {
           </aside>
         </div>
       </div>
+      {zoom && gallery.length > 0 && <Lightbox photos={gallery} index={photo} onClose={() => setZoom(false)} onIndex={setPhoto} />}
     </PublicShell>
   );
 }

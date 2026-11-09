@@ -33,6 +33,32 @@ export const Photo = ({ src, alt, ratio = '4 / 3', eager = false, className = ''
   </div>
 );
 
+/** Full-screen photo viewer: arrows / swipe-free buttons, Esc to close. */
+export function Lightbox({ photos, index, onClose, onIndex }) {
+  useEffect(() => {
+    const key = (e) => {
+      if (e.key === 'Escape') onClose();
+      if (e.key === 'ArrowRight') onIndex((index + 1) % photos.length);
+      if (e.key === 'ArrowLeft') onIndex((index - 1 + photos.length) % photos.length);
+    };
+    document.addEventListener('keydown', key);
+    document.body.style.overflow = 'hidden';
+    return () => { document.removeEventListener('keydown', key); document.body.style.overflow = ''; };
+  }, [index, photos.length, onClose, onIndex]);
+  const p = photos[index];
+  return (
+    <div className="lightbox" role="dialog" aria-modal="true" aria-label="Photo viewer" onClick={onClose}>
+      <img src={p.url} alt={p.alt} onClick={(e) => e.stopPropagation()} />
+      {photos.length > 1 && <>
+        <button className="lb-btn lb-prev" aria-label="Previous photo" onClick={(e) => { e.stopPropagation(); onIndex((index - 1 + photos.length) % photos.length); }}>‹</button>
+        <button className="lb-btn lb-next" aria-label="Next photo" onClick={(e) => { e.stopPropagation(); onIndex((index + 1) % photos.length); }}>›</button>
+      </>}
+      <button className="lb-btn lb-close" aria-label="Close" onClick={onClose}>×</button>
+      <span className="lb-count">{index + 1} / {photos.length}</span>
+    </div>
+  );
+}
+
 const ToastCtx = createContext(() => {});
 export const useToast = () => useContext(ToastCtx);
 export function ToastProvider({ children }) {

@@ -1,4 +1,5 @@
 export const BRAND = 'Mistridge Estate';
+export const coverOf = (room) => room?.photos?.[0]?.url || '/photos/estate.svg'; // placeholder until staff upload real photos
 export const inr = (n) => '₹' + Math.round(n ?? 0).toLocaleString('en-IN');
 export const todayISO = () => new Date(Date.now() + 330 * 60_000).toISOString().slice(0, 10);
 export const addDays = (s, n) => { const d = new Date(`${s}T00:00:00Z`); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10); };

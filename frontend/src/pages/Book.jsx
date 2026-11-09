@@ -57,15 +57,25 @@ export default function Book() {
     } catch (e) { setErrors((x) => ({ ...x, promo: e.message })); }
   };
 
-  const validateGuest = () => {
+  const validateGuest = (g, agreed) => {
     const e = {};
-    if (guest.name.trim().length < 2) e.name = 'Enter the name of the lead guest.';
-    if (!EMAIL.test(guest.email.trim())) e.email = 'Enter a valid email address.';
-    if (!PHONE.test(guest.phone.trim())) e.phone = 'Enter a phone number with 8–16 digits.';
-    if (!consent) e.consent = 'Please accept the privacy notice to continue.';
+    if (g.name.trim().length < 2) e.name = 'Enter the name of the lead guest.';
+    if (!EMAIL.test(g.email.trim())) e.email = 'Enter a valid email address.';
+    if (!PHONE.test(g.phone.trim())) e.phone = 'Enter a phone number with 8–16 digits.';
+    if (!agreed) e.consent = 'Please tick the privacy notice box to continue.';
     setErrors(e);
     if (Object.keys(e).length) setTimeout(() => document.getElementById('form-errors')?.scrollIntoView({ block: 'center', behavior: 'smooth' }), 0);
     return !Object.keys(e).length;
+  };
+
+  // Read the values straight from the form, so browser autofill (which can skip React's change events) still counts.
+  const submitGuest = (ev) => {
+    ev.preventDefault();
+    const el = ev.currentTarget.elements;
+    const g = { name: el.guestName.value, email: el.guestEmail.value, phone: el.guestPhone.value };
+    const agreed = el.consent.checked;
+    setGuest(g); setConsent(agreed);
+    if (validateGuest(g, agreed)) setStep(2);
   };
 
   const pay = async (ev) => {
@@ -139,17 +149,17 @@ export default function Book() {
               )}
 
               {step === 1 && (
-                <form className="stack" noValidate onSubmit={(e) => { e.preventDefault(); if (validateGuest()) setStep(2); }}>
+                <form className="stack" noValidate onSubmit={submitGuest}>
                   <h2>Guest details</h2>
-                  <Field label="Full name" error={errors['guest.name'] || errors.name}><input value={guest.name} onChange={(e) => setGuest({ ...guest, name: e.target.value })} autoComplete="name" /></Field>
+                  <Field label="Full name" error={errors['guest.name'] || errors.name}><input name="guestName" value={guest.name} onChange={(e) => setGuest({ ...guest, name: e.target.value })} autoComplete="name" /></Field>
                   <div className="row row-2">
-                    <Field label="Email" error={errors['guest.email'] || errors.email} hint="Your confirmation is shown here and on this email."><input type="email" value={guest.email} onChange={(e) => setGuest({ ...guest, email: e.target.value })} autoComplete="email" /></Field>
-                    <Field label="Phone" error={errors['guest.phone'] || errors.phone}><input type="tel" value={guest.phone} onChange={(e) => setGuest({ ...guest, phone: e.target.value })} autoComplete="tel" /></Field>
+                    <Field label="Email" error={errors['guest.email'] || errors.email} hint="Your confirmation is shown here and on this email."><input name="guestEmail" type="email" value={guest.email} onChange={(e) => setGuest({ ...guest, email: e.target.value })} autoComplete="email" /></Field>
+                    <Field label="Phone" error={errors['guest.phone'] || errors.phone}><input name="guestPhone" type="tel" value={guest.phone} onChange={(e) => setGuest({ ...guest, phone: e.target.value })} autoComplete="tel" /></Field>
                   </div>
                   <Field label="Special requests" hint="Optional. We pass these to the front desk; we cannot guarantee them."><textarea value={special} maxLength={500} onChange={(e) => setSpecial(e.target.value)} /></Field>
                   <p className="muted small">Passport details for foreign guests (Form C) are taken at check-in, not online. Please do not enter them here.</p>
                   <div>
-                    <label className="check"><input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} />
+                    <label className="check"><input name="consent" type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} />
                       <span>I agree that Mistridge Estate may use these details to manage my booking, as described in the privacy notice under the DPDP Act, 2023.</span></label>
                   </div>
                   {Object.keys(errors).some((k) => k !== 'promo') && <div id="form-errors" className="alert alert-error" role="alert">Please fix before continuing: {Object.entries(errors).filter(([k]) => k !== 'promo').map(([, v]) => v).join(' ')}</div>}

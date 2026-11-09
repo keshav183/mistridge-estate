@@ -41,26 +41,26 @@ function RoomCard({ r, stay }) {
   const hasDates = stay.checkIn && stay.checkOut;
   const flex = r.plans.find((p) => p.code === 'flex') || r.plans[0];
   const to = `/rooms/${room.slug}?${qs(hasDates ? stay : { adults: stay.adults, children: stay.children })}`;
-  const unavailable = hasDates && r.left === 0;
+  // r.nights is 0 on the no-dates list, which can still be on screen for one render after dates are picked.
+  const unavailable = hasDates && r.nights > 0 && r.left === 0;
+  const priced = hasDates && r.nights > 0 && Boolean(flex);
   return (
     <article className={`room-card ${unavailable ? 'soldout' : ''}`}>
       <Photo src={room.photos[0]?.url} alt={room.photos[0]?.alt || room.name} />
       <div className="body">
         <div><h3><Link to={to} style={{ textDecoration: 'none' }}>{room.name}</Link></h3><p className="muted">{room.tagline}</p></div>
         <div className="facts"><span>{room.sizeSqft} sq ft</span><span>{room.bed}</span><span>Sleeps {room.maxGuests}</span></div>
-        {hasDates ? (
-          unavailable ? (
-            <div><span className="badge badge-red">{r.fits ? 'Sold out for these dates' : `Too small for ${stay.adults + stay.children} guests`}</span>
-              <p className="muted small" style={{ marginTop: '.5rem' }}>{r.fits ? 'Try nearby dates, or send us an enquiry.' : 'Try a larger room type or add a second room.'}</p></div>
-          ) : (
-            <div className="price-line">
-              <span className="price">{inr(flex.quote.total)}</span>
-              <span className="muted small">for {plural(r.nights, 'night')}, incl. GST</span>
-              {r.left <= 3 && <span className="badge">Only {r.left} left</span>}
-            </div>
-          )
-        ) : <p className="muted small">Choose dates to see prices and availability.</p>}
-        <div><Link className={`btn ${unavailable ? 'btn-quiet' : ''}`} to={to}>{hasDates && !unavailable ? 'Choose this room' : 'View room'}</Link></div>
+        {unavailable ? (
+          <div><span className="badge badge-red">{r.fits ? 'Sold out for these dates' : `Too small for ${stay.adults + stay.children} guests`}</span>
+            <p className="muted small" style={{ marginTop: '.5rem' }}>{r.fits ? 'Try nearby dates, or send us an enquiry.' : 'Try a larger room type or add a second room.'}</p></div>
+        ) : priced ? (
+          <div className="price-line">
+            <span className="price">{inr(flex.quote.total)}</span>
+            <span className="muted small">for {plural(r.nights, 'night')}, incl. GST</span>
+            {r.left <= 3 && <span className="badge">Only {r.left} left</span>}
+          </div>
+        ) : <p className="muted small">{hasDates ? 'Checking prices…' : 'Choose dates to see prices and availability.'}</p>}
+        <div><Link className={`btn ${unavailable ? 'btn-quiet' : ''}`} to={to}>{priced && !unavailable ? 'Choose this room' : 'View room'}</Link></div>
       </div>
     </article>
   );

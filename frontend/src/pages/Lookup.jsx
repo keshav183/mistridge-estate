@@ -28,7 +28,7 @@ export function BookingCard({ b, isNew }) {
         <PriceLines quote={b.pricing} promoCode={b.promoCode} />
         <p className="muted small">Check-in from 2 pm, check-out by 11 am. Foreign guests: please carry your passport and visa; Form C details are taken at check-in.</p>
       </div>
-      <div style={{ display: 'flex', gap: '.8rem', flexWrap: 'wrap' }}><button className="btn btn-quiet" onClick={() => window.print()}>Print</button><Link className="btn" to="/">Back to the estate</Link></div>
+      <div style={{ display: 'flex', gap: '.8rem', flexWrap: 'wrap' }}><Link className="btn" to="/">Back to the estate</Link></div>
     </div>
   );
 }

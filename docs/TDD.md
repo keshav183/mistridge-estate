@@ -123,7 +123,8 @@ complaint (or any complaint signal) ─► GM notification
 | **Home** | Full-bleed ridge photograph with one line of copy; the date/guest search bar sits on the image edge so the first action is obvious. Results below are large photo cards with total price including GST, so the guest never meets a surprise at checkout. |
 | **Room page** | Gallery, facts, and a sticky booking panel. The calendar shows a nightly price or "2 left" on each day, crosses out unavailable nights, and only lets a sold-out day serve as check-out. Rate plans show the **total** per plan. |
 | **Booking (3 steps)** | Stay → Guest → Payment, as the brief allows at most three. A persistent summary shows the live total with GST lines. Promo and test-card hints are inline. The consent notice and the "passport details are taken at check-in" note are on the guest step. |
-| **Confirmation / lookup** | Large reference, full price breakdown. Lookup needs reference **and** email. |
+| **Confirmation / lookup** | Large reference, full price breakdown. Lookup needs reference **and** email. There is no print or PDF export on the guest or staff side. |
+| **Enquiry page + side tab** | A fixed "Enquiry" tab on the right edge of every guest page (and an "Enquiry" link in the header) opens a plain-language form: message, name, contact, consent. The message goes to the AI router, which classifies it, extracts dates and guests, assigns an owner and drafts a reply; the guest only sees a reference number. |
 | **Events form** | Structured: type, guests, flexible month or exact dates, nights, rooms, budget in lakh. This data fixes the category with full confidence and feeds the draft. |
 | **Rates & allotment** | A 14-day grid per room type showing rate and sold/allotment; full nights tinted, blackouts hatched; click a cell to prefill a bulk-edit form with weekday chips. |
 | **Enquiry inbox** | Lane tabs with counts (Unsorted highlighted when non-empty), list, and detail pane: original message, an "AI reading" card (category, confidence bar, extracted fields, warnings), one-click lane control, owner select, editable draft, history. On a phone the list and detail are separate views. |
@@ -132,7 +133,7 @@ States: every data screen has a skeleton while loading, an empty state that says
 
 # 9. Security, privacy and compliance
 
-* **No secrets in the repo.** `.env` ignored; `.env.example` has names only; the app refuses to start without a strong `JWT_SECRET`.
+* **No real secrets in the repo.** `.env` is ignored. Every secret (`JWT_SECRET`, `GEMINI_API_KEY`, `INGEST_KEY`, the demo password) defaults to the demo value `hello123` so the project runs with no setup; `GEMINI_API_KEY=hello123` means "no real key" and the rules engine is used. The app warns on start in production if `JWT_SECRET` is still `hello123`: change all of them before any real use.
 * **Validated inputs.** Every endpoint validates with zod (types, ranges, formats, unknown fields stripped). Mongo operators cannot be injected because typed fields reject objects. Regexes built from user text are escaped.
 * **Access control.** Roles enforced on the server (`requireRole`), not just hidden in the UI: staff-only admin and inbox, rates/promos/bookings limited to reservations and GM. Public sign-up cannot create staff. Booking lookup requires code and email. Guest views omit payment references.
 * **Abuse and transport.** helmet with CSP, rate limits on login, booking, lookup and public enquiries, 50 KB body limit, Secure/httpOnly/SameSite cookies in production, bcrypt, constant-time compare on the ingest key.

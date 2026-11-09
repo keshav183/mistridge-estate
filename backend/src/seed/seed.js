@@ -110,7 +110,7 @@ export async function seedDatabase() {
   const created = new Date(Date.now() - 3 * 3600_000);
   await Enquiry.collection.updateOne({ _id: e._id }, { $set: { createdAt: created, firstReplyAt: new Date(created.getTime() + 14 * 60_000), status: 'replied', replies: [{ body: e.ai.draft, sentAt: new Date(created.getTime() + 14 * 60_000), simulated: true }] } });
 
-  console.log('Seeded. Demo logins (password from SEED_PASSWORD, default Demo@1234):');
+  console.log('Seeded. Demo logins (password from SEED_PASSWORD, default hello123):');
   console.log('  gm@mistridge.test  reservations@mistridge.test  sales@mistridge.test');
   config.geminiKey = savedKey;
 }

@@ -4,7 +4,7 @@
 // Proves the headline guarantees: no overbooking under concurrency, payment failure releases stock,
 // promo/GST pricing, role-based access, blackout, CSV export, and enquiry routing.
 const BASE = (process.env.BASE || 'http://localhost:4000') + '/api';
-const PASS = process.env.SEED_PASSWORD || 'Demo@1234';
+const PASS = process.env.SEED_PASSWORD || 'hello123';
 const card = { number: '4242424242424242', expMonth: 12, expYear: 2035, cvc: '123' };
 let failed = 0;
 const check = (name, ok, extra = '') => { console.log(`${ok ? 'PASS' : 'FAIL'}  ${name}${extra ? '  ' + extra : ''}`); if (!ok) failed++; };

@@ -248,3 +248,9 @@ tr:last-child td { border-bottom: 0; }
 .weekdays { display: flex; gap: .3rem; flex-wrap: wrap; }
 .weekdays button { width: 40px; height: 36px; border: 1px solid var(--line-2); background: var(--surface); border-radius: var(--r-1); cursor: pointer; font: inherit; font-size: .82rem; }
 .weekdays button[aria-pressed="true"] { background: var(--canopy); color: #fff; border-color: var(--canopy); }
+
+/* Fixed "Enquiry" tab on the right edge of every guest page */
+.side-tab { position: fixed; right: 0; top: 50%; z-index: 30; transform: translateY(-50%); writing-mode: vertical-rl; background: var(--ink); color: #fff; text-decoration: none; padding: 1rem .6rem; font-size: .9rem; letter-spacing: .08em; border-radius: var(--r-2) 0 0 var(--r-2); }
+.side-tab:hover { background: var(--canopy); }
+@media (max-width: 640px) { .side-tab { padding: .8rem .45rem; font-size: .8rem; top: 62%; } }
+@media print { .side-tab { display: none; } }

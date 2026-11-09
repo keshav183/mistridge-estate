@@ -1,8 +1,7 @@
 import 'dotenv/config';
-import crypto from 'node:crypto';
+const PLACEHOLDER = 'hello123'; // demo value for every secret; replace for a real deployment
 
 const env = (key, fallback = '') => process.env[key] ?? fallback;
-const isProd = env('NODE_ENV', 'development') === 'production';
 
 export const config = {
   env: env('NODE_ENV', 'development'),
@@ -10,17 +9,18 @@ export const config = {
   // Empty = run on an embedded MongoDB (no install needed). Set it to use a real MongoDB / Atlas.
   mongoUri: env('MONGODB_URI'),
   dataDir: env('DATA_DIR', '.data'),
-  // In development a missing secret becomes a random one (sessions reset on restart). Production must set it.
-  jwtSecret: env('JWT_SECRET') || (isProd ? '' : crypto.randomBytes(32).toString('hex')),
+  jwtSecret: env('JWT_SECRET', PLACEHOLDER),
   clientOrigin: env('CLIENT_ORIGIN'),
-  geminiKey: env('GEMINI_API_KEY'),
+  // The placeholder value means "no real key yet": the router then uses its built-in rules engine.
+  geminiKey: env('GEMINI_API_KEY', PLACEHOLDER) === PLACEHOLDER ? '' : env('GEMINI_API_KEY'),
   geminiModel: env('GEMINI_MODEL', 'gemini-2.5-flash'),
-  ingestKey: env('INGEST_KEY'),
+  ingestKey: env('INGEST_KEY', PLACEHOLDER),
   confidenceThreshold: Number(env('AI_CONFIDENCE_THRESHOLD', 0.6)),
-  seedPassword: env('SEED_PASSWORD', 'Demo@1234'),
+  seedPassword: env('SEED_PASSWORD', PLACEHOLDER),
   brand: 'Mistridge Estate',
 };
 
 export function assertConfig() {
-  if (config.jwtSecret.length < 32) throw new Error('JWT_SECRET must be set to at least 32 characters in production.');
+  if (config.jwtSecret.length < 8) throw new Error('JWT_SECRET must be at least 8 characters.');
+  if (config.env === 'production' && config.jwtSecret === PLACEHOLDER) console.warn('WARNING: JWT_SECRET is the demo value hello123. Change it before real use.');
 }

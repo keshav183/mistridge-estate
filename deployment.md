@@ -17,8 +17,8 @@ Open **http://localhost:5173**.
 * **MongoDB is optional.** With no `MONGODB_URI`, the API starts an *embedded* MongoDB and keeps its files in `backend/.data`, so data survives restarts. The first run downloads the MongoDB binary once (about 70 MB), then starts in a few seconds.
 * **Demo data loads itself** the first time (rooms, 400 days of rates, promo codes, sample bookings, the sample enquiries). Reset: stop the server, delete `backend/.data`, start again. (`npm run seed` also wipes and reloads.)
 * **Use your own MongoDB instead:** copy `backend/.env.example` to `backend/.env` and set `MONGODB_URI` (local `mongod`, Docker, or Atlas).
-* **AI:** works out of the box with the built-in rules engine. To turn on Gemini, set `GEMINI_API_KEY` in `backend/.env` (free key from Google AI Studio) and restart.
-* **JWT_SECRET** is generated randomly in development; you only set it in production.
+* **AI (Gemini):** every enquiry is routed by the AI router. Out of the box it runs on the built-in rules engine. To switch on Gemini, copy `backend/.env.example` to `backend/.env`, put your real key in `GEMINI_API_KEY=` (free key from Google AI Studio) and restart; the terminal then says `AI: Gemini + rules`.
+* **All secrets default to `hello123`** (`JWT_SECRET`, `INGEST_KEY`, `SEED_PASSWORD`, `GEMINI_API_KEY`), so no `.env` is needed locally. `GEMINI_API_KEY=hello123` means "no real key". Change every one of them for a real deployment.
 
 ```bash
 npm test          # 29 unit tests, no database needed
@@ -42,19 +42,19 @@ Live app: _add URL here after deploying_
 | Variable | Needed | Purpose |
 |---|---|---|
 | `MONGODB_URI` | production | MongoDB connection string. Empty = embedded MongoDB (local only) |
-| `JWT_SECRET` | production | Signs session cookies (32+ chars) |
+| `JWT_SECRET` | production | Signs session cookies (demo default `hello123`; change it in production) |
 | `NODE_ENV` | production | `production` enables Secure cookies and upgrade-insecure-requests |
-| `GEMINI_API_KEY` | optional | Turns on the Gemini layer of the enquiry router |
+| `GEMINI_API_KEY` | optional | Turns on the Gemini layer of the enquiry router (`hello123` = off) |
 | `GEMINI_MODEL` | optional | Defaults to `gemini-2.5-flash` |
-| `INGEST_KEY` | optional | Shared secret for the simulated WhatsApp/email webhook (header `x-ingest-key`) |
+| `INGEST_KEY` | optional | Shared secret for the simulated WhatsApp/email webhook (header `x-ingest-key`; demo `hello123`) |
 | `AI_CONFIDENCE_THRESHOLD` | optional | Below this, an enquiry goes to the GM's Unsorted lane (default 0.6) |
-| `PORT`, `DATA_DIR`, `CLIENT_ORIGIN`, `SEED_PASSWORD` | optional | Port, embedded DB folder, dev-only CORS origin, demo password |
+| `PORT`, `DATA_DIR`, `CLIENT_ORIGIN`, `SEED_PASSWORD` | optional | Port, embedded DB folder, dev-only CORS origin, demo password (default `hello123`) |
 
 No secrets are in the repository; `.env` and `.data` are git-ignored.
 
 ## 4. Demo logins (staff; guests book without an account)
 
-Password for all: **`Demo@1234`**
+Password for all: **`hello123`**
 
 | Role | Email | Can do |
 |---|---|---|
@@ -65,6 +65,7 @@ Password for all: **`Demo@1234`**
 Sign in at `/login` (the "Staff" link in the header). **Test cards:** `4242 4242 4242 4242` succeeds; `4000 0000 0000 0002` is declined. Any future expiry, any 3-digit code.
 
 ## 5. Suggested 5-minute review path
+0. Guest side: use the **Enquiry** tab on the right edge of the home page to send a message such as "Is a villa free 14-16 Nov for 2 adults and a child?"; sign in as staff and see it already routed in the inbox.
 1. Home: pick dates, open *Planter's Villa*, choose a rate plan, Reserve, three steps, confirmation. Look the booking up again from "My booking".
 2. Sign in as Reservations, *Rates & allotment*: click a night, set allotment to what is already sold, then try to book it as a guest: it is refused. Block a date: it disappears from the guest calendar.
 3. *Enquiry inbox*: the three sample enquiries from the brief are already routed (Wedding, Room, Offsite). Open one, read the AI reading, edit the draft, Send (simulated).

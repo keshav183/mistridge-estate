@@ -51,7 +51,7 @@ input:focus, select:focus, textarea:focus { outline: 2px solid var(--canopy); ou
 .check { display: flex; gap: .7rem; align-items: flex-start; font-size: .9rem; color: var(--ink-2); }
 .check input { width: 20px; min-height: 20px; margin-top: .15rem; accent-color: var(--canopy); flex: none; }
 .row { display: grid; gap: 1rem; }
-.row-2 { grid-template-columns: repeat(2, 1fr); }
+.row-2 { grid-template-columns: repeat(2, 1fr); align-items: start; }
 .row-3 { grid-template-columns: repeat(3, 1fr); align-items: start; }
 @media (max-width: 640px) { .row-2, .row-3 { grid-template-columns: 1fr; } }
 .alert { padding: .85rem 1rem; font-size: .92rem; border: 1px solid var(--line); border-left: 3px solid var(--ink-3); background: var(--mist); border-radius: var(--r-1); }

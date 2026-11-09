@@ -26,7 +26,7 @@ export default function Events() {
     if (f.mode === 'flexible' && !f.month) e.month = 'Choose a month.';
     if (!f.consent) e.consent = 'Please accept the privacy notice to continue.';
     setErrors(e);
-    if (Object.keys(e).length) return;
+    if (Object.keys(e).length) { setTimeout(() => document.getElementById('form-errors')?.scrollIntoView({ block: 'center', behavior: 'smooth' }), 0); return; }
     setState({ busy: true, ref: null, error: null });
     try {
       const form = { eventType: f.eventType, guests: Number(f.guests), notes: f.notes.trim() || undefined,
@@ -85,6 +85,7 @@ export default function Events() {
               <label className="check"><input type="checkbox" checked={f.consent} onChange={set('consent')} /><span>I agree that Mistridge Estate may use these details to respond to my enquiry, as described in the privacy notice under the DPDP Act, 2023.</span></label>
               {(errors.consent) && <span className="field-error" role="alert">{errors.consent}</span>}
             </div>
+            {Object.keys(errors).length > 0 && <div id="form-errors" className="alert alert-error" role="alert">Please fix before sending: {Object.values(errors).join(' ')}</div>}
             <div><button className="btn" disabled={state.busy}>{state.busy ? <><Spinner /> Sending…</> : 'Send enquiry'}</button></div>
           </form>
           <Photo src="/photos/events.svg" alt="Wedding lawn with a flower-draped arch" ratio="4 / 5" />

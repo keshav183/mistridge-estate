@@ -64,6 +64,7 @@ export default function Book() {
     if (!PHONE.test(guest.phone.trim())) e.phone = 'Enter a phone number with 8–16 digits.';
     if (!consent) e.consent = 'Please accept the privacy notice to continue.';
     setErrors(e);
+    if (Object.keys(e).length) setTimeout(() => document.getElementById('form-errors')?.scrollIntoView({ block: 'center', behavior: 'smooth' }), 0);
     return !Object.keys(e).length;
   };
 
@@ -150,8 +151,8 @@ export default function Book() {
                   <div>
                     <label className="check"><input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} />
                       <span>I agree that Mistridge Estate may use these details to manage my booking, as described in the privacy notice under the DPDP Act, 2023.</span></label>
-                    {(errors.consent || errors['consent']) && <span className="field-error" role="alert">{errors.consent || errors['consent']}</span>}
                   </div>
+                  {Object.keys(errors).some((k) => k !== 'promo') && <div id="form-errors" className="alert alert-error" role="alert">Please fix before continuing: {Object.entries(errors).filter(([k]) => k !== 'promo').map(([, v]) => v).join(' ')}</div>}
                   <div style={{ display: 'flex', gap: '.8rem' }}><button type="button" className="btn btn-quiet" onClick={() => setStep(0)}>Back</button><button className="btn" type="submit">Continue to payment</button></div>
                 </form>
               )}

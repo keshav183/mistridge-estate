@@ -32,7 +32,7 @@ export default function Login() {
         <button className="btn" disabled={busy || !f.email || !f.password}>{busy ? <Spinner /> : 'Sign in'}</button>
         <details className="alert">
           <summary>Reviewer demo accounts</summary>
-          <p className="small" style={{ margin: '.6rem 0' }}>Seeded sample users; the password is hello123.</p>
+          <p className="small" style={{ margin: '.6rem 0' }}></p>
           <div className="chips">{DEMO.map(([l, e]) => <button type="button" key={e} className="tab" onClick={() => setF({ ...f, email: e })}>{l}</button>)}</div>
         </details>
       </form>
